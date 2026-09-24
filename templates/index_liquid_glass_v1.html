@@ -1,0 +1,1829 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HydroIntel | Municipal Water Intelligence Dashboard</title>
+    <meta name="description" content="AI-powered municipal water demand forecasting and operational intelligence for Hyderabad GHMC zones.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        /* ============================================================
+           HydroIntel — Apple Liquid Glass Design System
+           Inspired by Apple's visionOS & iOS 26 Glassmorphism
+           ============================================================ */
+
+        :root {
+            /* Ambient Background */
+            --bg-ambient: #0B1120;
+            --bg-mesh-1: #0F2847;
+            --bg-mesh-2: #0A1628;
+            --bg-mesh-3: #112240;
+
+            /* Glass Tokens */
+            --glass-bg: rgba(255, 255, 255, 0.06);
+            --glass-bg-hover: rgba(255, 255, 255, 0.10);
+            --glass-bg-card: rgba(255, 255, 255, 0.08);
+            --glass-bg-input: rgba(255, 255, 255, 0.07);
+            --glass-bg-elevated: rgba(255, 255, 255, 0.12);
+            --glass-border: rgba(255, 255, 255, 0.12);
+            --glass-border-bright: rgba(255, 255, 255, 0.20);
+            --glass-border-subtle: rgba(255, 255, 255, 0.06);
+            --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+            --glass-shadow-lg: 0 20px 60px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            --glass-shadow-glow: 0 0 40px rgba(56, 189, 248, 0.08);
+            --blur: blur(40px);
+            --blur-sm: blur(20px);
+            --saturate: saturate(180%);
+
+            /* Ocean Palette */
+            --ocean-cyan: #38BDF8;
+            --ocean-blue: #0EA5E9;
+            --ocean-deep: #0284C7;
+            --ocean-light: #7DD3FC;
+            --ocean-pale: rgba(56, 189, 248, 0.12);
+            --ocean-glow: rgba(56, 189, 248, 0.25);
+            --teal: #2DD4BF;
+            --teal-glow: rgba(45, 212, 191, 0.2);
+
+            --emerald: #34D399;
+            --emerald-pale: rgba(52, 211, 153, 0.12);
+            --rose: #FB7185;
+            --rose-pale: rgba(251, 113, 133, 0.12);
+            --amber: #FBBF24;
+            --amber-pale: rgba(251, 191, 36, 0.12);
+            --violet: #A78BFA;
+            --violet-pale: rgba(167, 139, 250, 0.12);
+
+            /* Typography */
+            --text-primary: rgba(255, 255, 255, 0.95);
+            --text-secondary: rgba(255, 255, 255, 0.60);
+            --text-muted: rgba(255, 255, 255, 0.35);
+            --text-white: #FFFFFF;
+
+            /* Radius */
+            --radius-sm: 10px;
+            --radius-md: 14px;
+            --radius-lg: 20px;
+            --radius-xl: 24px;
+            --radius-2xl: 28px;
+            --radius-pill: 999px;
+
+            /* Motion */
+            --transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            --transition-fast: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        html { scroll-behavior: smooth; }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+            background: var(--bg-ambient);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* ===== Ambient Mesh Background ===== */
+        .ambient-bg {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: 0;
+            overflow: hidden;
+        }
+
+        .mesh-orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(100px);
+            opacity: 0.5;
+            animation: orbFloat 20s ease-in-out infinite;
+        }
+
+        .mesh-orb-1 {
+            width: 600px; height: 600px;
+            background: radial-gradient(circle, rgba(14, 165, 233, 0.3) 0%, transparent 70%);
+            top: -10%; left: -5%;
+            animation-delay: 0s;
+        }
+
+        .mesh-orb-2 {
+            width: 500px; height: 500px;
+            background: radial-gradient(circle, rgba(45, 212, 191, 0.25) 0%, transparent 70%);
+            top: 40%; right: -10%;
+            animation-delay: -7s;
+        }
+
+        .mesh-orb-3 {
+            width: 450px; height: 450px;
+            background: radial-gradient(circle, rgba(56, 189, 248, 0.2) 0%, transparent 70%);
+            bottom: -5%; left: 30%;
+            animation-delay: -14s;
+        }
+
+        .mesh-orb-4 {
+            width: 350px; height: 350px;
+            background: radial-gradient(circle, rgba(167, 139, 250, 0.15) 0%, transparent 70%);
+            top: 20%; left: 50%;
+            animation-delay: -3s;
+        }
+
+        @keyframes orbFloat {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            25% { transform: translate(30px, -40px) scale(1.05); }
+            50% { transform: translate(-20px, 20px) scale(0.95); }
+            75% { transform: translate(40px, 30px) scale(1.03); }
+        }
+
+        /* Fluid Canvas */
+        #fluidCanvas {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 1;
+            opacity: 0.4;
+        }
+
+        /* ===== App Wrapper ===== */
+        .app-wrapper {
+            position: relative;
+            z-index: 2;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* ===== Glass Top Bar ===== */
+        .topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 32px;
+            background: var(--glass-bg);
+            backdrop-filter: var(--blur) var(--saturate);
+            -webkit-backdrop-filter: var(--blur) var(--saturate);
+            border-bottom: 1px solid var(--glass-border);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .topbar-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .topbar-logo {
+            width: 38px; height: 38px;
+            background: linear-gradient(135deg, var(--ocean-cyan) 0%, var(--teal) 100%);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            box-shadow: 0 4px 20px var(--ocean-glow);
+        }
+
+        .topbar-title {
+            font-size: 1.1rem;
+            font-weight: 800;
+            letter-spacing: -0.3px;
+            background: linear-gradient(135deg, var(--text-primary) 0%, var(--ocean-light) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .topbar-subtitle {
+            font-size: 0.6rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            font-weight: 600;
+        }
+
+        .topbar-right {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .topbar-badge {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: var(--ocean-pale);
+            border: 1px solid rgba(56, 189, 248, 0.15);
+            color: var(--ocean-cyan);
+            font-size: 0.65rem;
+            font-weight: 600;
+            padding: 5px 12px;
+            border-radius: var(--radius-pill);
+            letter-spacing: 0.6px;
+            text-transform: uppercase;
+        }
+
+        .topbar-badge .dot {
+            width: 5px; height: 5px;
+            background: var(--ocean-cyan);
+            border-radius: 50%;
+            animation: pulseDot 2s ease-in-out infinite;
+            box-shadow: 0 0 8px var(--ocean-glow);
+        }
+
+        @keyframes pulseDot {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(0.8); }
+        }
+
+        .topbar-status {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.68rem;
+            font-weight: 500;
+            color: var(--emerald);
+            padding: 5px 12px;
+            background: var(--emerald-pale);
+            border-radius: var(--radius-pill);
+            border: 1px solid rgba(52, 211, 153, 0.15);
+        }
+
+        .topbar-status .dot-green {
+            width: 5px; height: 5px;
+            background: var(--emerald);
+            border-radius: 50%;
+            box-shadow: 0 0 8px rgba(52, 211, 153, 0.4);
+        }
+
+        /* ===== Main Content ===== */
+        .main-content {
+            flex: 1;
+            padding: 40px;
+            max-width: 1200px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        /* ===== INPUT PAGE — Split Layout ===== */
+        .input-page {
+            animation: fadeUp 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .split-layout {
+            display: grid;
+            grid-template-columns: 1fr 1.1fr;
+            gap: 48px;
+            align-items: center;
+            min-height: calc(100vh - 200px);
+        }
+
+        /* Left Hero */
+        .hero-side { padding: 20px 0; }
+
+        .hero-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: var(--ocean-pale);
+            border: 1px solid rgba(56, 189, 248, 0.15);
+            color: var(--ocean-cyan);
+            font-size: 0.7rem;
+            font-weight: 700;
+            padding: 6px 14px;
+            border-radius: var(--radius-pill);
+            margin-bottom: 20px;
+            letter-spacing: 0.8px;
+            text-transform: uppercase;
+        }
+
+        .hero-side h1 {
+            font-size: 2.8rem;
+            font-weight: 900;
+            line-height: 1.1;
+            letter-spacing: -1.2px;
+            margin-bottom: 16px;
+        }
+
+        .hero-side h1 .highlight {
+            background: linear-gradient(135deg, var(--ocean-cyan) 0%, var(--teal) 50%, var(--ocean-light) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero-side > p {
+            color: var(--text-secondary);
+            font-size: 1rem;
+            line-height: 1.7;
+            margin-bottom: 32px;
+            max-width: 420px;
+        }
+
+        /* Feature Pills */
+        .feature-pills {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 36px;
+        }
+
+        .pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 7px 14px;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-pill);
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            backdrop-filter: var(--blur-sm);
+            -webkit-backdrop-filter: var(--blur-sm);
+            transition: var(--transition);
+        }
+
+        .pill:hover {
+            background: var(--glass-bg-hover);
+            border-color: var(--glass-border-bright);
+            transform: translateY(-1px);
+        }
+
+        .pill-icon { font-size: 0.9rem; }
+
+        /* Zone Mini Cards */
+        .zone-cards-section { margin-top: 12px; }
+
+        .zone-cards-label {
+            font-size: 0.65rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            color: var(--text-muted);
+            margin-bottom: 10px;
+        }
+
+        .zone-cards-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+        }
+
+        .zone-mini-card {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-md);
+            padding: 10px 12px;
+            text-align: center;
+            backdrop-filter: var(--blur-sm);
+            -webkit-backdrop-filter: var(--blur-sm);
+            transition: var(--transition);
+            cursor: default;
+        }
+
+        .zone-mini-card:hover {
+            background: var(--glass-bg-hover);
+            border-color: rgba(56, 189, 248, 0.25);
+            box-shadow: var(--glass-shadow-glow);
+            transform: translateY(-2px);
+        }
+
+        .zone-mini-card .zname {
+            font-size: 0.72rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 2px;
+        }
+
+        .zone-mini-card .zstat {
+            font-size: 0.62rem;
+            color: var(--text-muted);
+        }
+
+        /* ===== Right Form — Glass Card ===== */
+        .form-side { position: relative; }
+
+        .form-card {
+            background: var(--glass-bg-card);
+            backdrop-filter: var(--blur) var(--saturate);
+            -webkit-backdrop-filter: var(--blur) var(--saturate);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-2xl);
+            padding: 36px;
+            box-shadow: var(--glass-shadow-lg);
+            position: relative;
+            overflow: visible;
+        }
+
+        .form-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--ocean-cyan), var(--teal), transparent);
+            opacity: 0.6;
+        }
+
+        .form-card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 28px;
+        }
+
+        .form-card-title {
+            font-size: 1.05rem;
+            font-weight: 700;
+        }
+
+        .form-card-badge {
+            font-size: 0.6rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: var(--ocean-cyan);
+            background: var(--ocean-pale);
+            border: 1px solid rgba(56, 189, 248, 0.15);
+            padding: 4px 10px;
+            border-radius: var(--radius-pill);
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 18px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group.full-width { grid-column: span 2; }
+
+        .form-group label {
+            font-size: 0.72rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 7px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .label-icon { font-size: 0.85rem; }
+
+        .input-wrap { position: relative; }
+
+        .form-group input {
+            width: 100%;
+            padding: 13px 14px;
+            background: var(--glass-bg-input);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-md);
+            color: var(--text-primary);
+            font-size: 0.9rem;
+            font-family: 'Inter', sans-serif;
+            font-weight: 500;
+            transition: var(--transition);
+            outline: none;
+            backdrop-filter: var(--blur-sm);
+            -webkit-backdrop-filter: var(--blur-sm);
+        }
+
+        .form-group input::placeholder {
+            color: var(--text-muted);
+        }
+
+        .form-group input:hover {
+            border-color: var(--glass-border-bright);
+            background: var(--glass-bg-hover);
+        }
+
+        .form-group input:focus {
+            border-color: var(--ocean-cyan);
+            box-shadow: 0 0 0 3px var(--ocean-pale), var(--glass-shadow-glow);
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .input-unit {
+            position: absolute;
+            right: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            pointer-events: none;
+        }
+
+        .form-group input.has-unit { padding-right: 48px; }
+
+        /* ===== Custom Zone Dropdown ===== */
+        .custom-select {
+            position: relative;
+            width: 100%;
+        }
+
+        .custom-select-trigger {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 13px 14px;
+            background: var(--glass-bg-input);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            transition: var(--transition);
+            user-select: none;
+            backdrop-filter: var(--blur-sm);
+            -webkit-backdrop-filter: var(--blur-sm);
+        }
+
+        .custom-select-trigger:hover {
+            border-color: var(--glass-border-bright);
+            background: var(--glass-bg-hover);
+        }
+
+        .custom-select.open .custom-select-trigger {
+            border-color: var(--ocean-cyan);
+            box-shadow: 0 0 0 3px var(--ocean-pale);
+            background: rgba(255, 255, 255, 0.1);
+            border-bottom-left-radius: 0;
+            border-bottom-right-radius: 0;
+        }
+
+        .trigger-content {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .trigger-zone-dot {
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            background: var(--ocean-cyan);
+            flex-shrink: 0;
+            box-shadow: 0 0 6px var(--ocean-glow);
+        }
+
+        .trigger-zone-name {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .trigger-arrow {
+            font-size: 0.6rem;
+            color: var(--text-muted);
+            transition: transform 0.3s ease;
+        }
+
+        .custom-select.open .trigger-arrow {
+            transform: rotate(180deg);
+        }
+
+        .custom-select-options {
+            position: absolute;
+            top: 100%;
+            left: 0; right: 0;
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: var(--blur) var(--saturate);
+            -webkit-backdrop-filter: var(--blur) var(--saturate);
+            border: 1px solid var(--ocean-cyan);
+            border-top: none;
+            border-radius: 0 0 var(--radius-md) var(--radius-md);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+            z-index: 50;
+            max-height: 0;
+            overflow: hidden;
+            opacity: 0;
+            transition: max-height 0.3s ease, opacity 0.2s ease;
+        }
+
+        .custom-select.open .custom-select-options {
+            max-height: 320px;
+            opacity: 1;
+            overflow-y: auto;
+        }
+
+        .custom-option {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 14px;
+            cursor: pointer;
+            transition: background 0.15s ease;
+            color: var(--text-primary);
+        }
+
+        .custom-option:hover {
+            background: var(--ocean-pale);
+        }
+
+        .custom-option.selected {
+            background: var(--ocean-pale);
+        }
+
+        .option-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .option-dot {
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            background: var(--glass-border-bright);
+            flex-shrink: 0;
+            transition: var(--transition);
+        }
+
+        .custom-option:hover .option-dot,
+        .custom-option.selected .option-dot {
+            background: var(--ocean-cyan);
+            box-shadow: 0 0 8px var(--ocean-glow);
+        }
+
+        .option-name {
+            font-size: 0.88rem;
+            font-weight: 600;
+        }
+
+        .option-check {
+            font-size: 0.85rem;
+            color: var(--ocean-cyan);
+            opacity: 0;
+            transition: opacity 0.15s ease;
+        }
+
+        .custom-option.selected .option-check {
+            opacity: 1;
+        }
+
+        /* ===== Submit Button ===== */
+        .btn-analyze {
+            grid-column: span 2;
+            padding: 15px 28px;
+            margin-top: 6px;
+            background: linear-gradient(135deg, var(--ocean-blue) 0%, var(--ocean-cyan) 50%, var(--teal) 100%);
+            color: var(--text-white);
+            border: none;
+            border-radius: var(--radius-md);
+            font-size: 0.95rem;
+            font-weight: 700;
+            font-family: 'Inter', sans-serif;
+            cursor: pointer;
+            transition: var(--transition);
+            letter-spacing: 0.2px;
+            box-shadow: 0 8px 32px var(--ocean-glow);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-analyze::before {
+            content: '';
+            position: absolute;
+            top: 0; left: -100%;
+            width: 100%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+            transition: left 0.6s ease;
+        }
+
+        .btn-analyze:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 16px 48px var(--ocean-glow);
+        }
+
+        .btn-analyze:hover::before { left: 100%; }
+        .btn-analyze:active { transform: translateY(0); }
+
+        .btn-icon {
+            font-size: 1.1rem;
+            transition: transform 0.3s ease;
+        }
+
+        .btn-analyze:hover .btn-icon {
+            transform: translateX(3px);
+        }
+
+        /* ===== Loading Overlay ===== */
+        .loading-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(11, 17, 32, 0.92);
+            backdrop-filter: blur(40px);
+            -webkit-backdrop-filter: blur(40px);
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            gap: 28px;
+        }
+
+        .loading-overlay.active {
+            display: flex;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        .loading-visual {
+            position: relative;
+            width: 100px; height: 100px;
+        }
+
+        .loading-ring {
+            width: 100px; height: 100px;
+            border-radius: 50%;
+            border: 3px solid var(--glass-border);
+            border-top-color: var(--ocean-cyan);
+            animation: spin 1s linear infinite;
+            box-shadow: 0 0 30px var(--ocean-pale);
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .loading-ring-icon {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 2rem;
+            animation: dropPulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes dropPulse {
+            0%, 100% { transform: translate(-50%, -50%) scale(1); }
+            50% { transform: translate(-50%, -50%) scale(1.15); }
+        }
+
+        .loading-text { text-align: center; }
+
+        .loading-text h3 {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 6px;
+        }
+
+        .loading-text p {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .loading-progress {
+            width: 220px; height: 3px;
+            background: var(--glass-border);
+            border-radius: var(--radius-pill);
+            overflow: hidden;
+        }
+
+        .loading-progress-bar {
+            width: 0%; height: 100%;
+            background: linear-gradient(90deg, var(--ocean-cyan), var(--teal));
+            border-radius: var(--radius-pill);
+            animation: progressFill 8s ease-out forwards;
+            box-shadow: 0 0 12px var(--ocean-glow);
+        }
+
+        @keyframes progressFill {
+            0% { width: 0%; }
+            15% { width: 25%; }
+            40% { width: 50%; }
+            70% { width: 72%; }
+            100% { width: 90%; }
+        }
+
+        .loading-steps {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .loading-step {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            transition: var(--transition);
+        }
+
+        .loading-step.active { color: var(--ocean-cyan); font-weight: 600; }
+        .loading-step.done { color: var(--emerald); }
+
+        .loading-step-dot {
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            background: var(--glass-border);
+            flex-shrink: 0;
+            transition: var(--transition);
+        }
+
+        .loading-step.active .loading-step-dot {
+            background: var(--ocean-cyan);
+            box-shadow: 0 0 10px var(--ocean-glow);
+            animation: pulseDot 1.2s ease-in-out infinite;
+        }
+
+        .loading-step.done .loading-step-dot {
+            background: var(--emerald);
+            box-shadow: 0 0 8px rgba(52, 211, 153, 0.4);
+        }
+
+        /* ===== RESULTS PAGE ===== */
+        .results-page {
+            animation: fadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .results-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 24px;
+        }
+
+        .results-header-left h2 {
+            font-size: 1.5rem;
+            font-weight: 800;
+            letter-spacing: -0.3px;
+        }
+
+        .results-header-left p {
+            font-size: 0.82rem;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        .btn-new {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 10px 20px;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-md);
+            color: var(--text-secondary);
+            font-size: 0.82rem;
+            font-weight: 600;
+            font-family: 'Inter', sans-serif;
+            cursor: pointer;
+            transition: var(--transition);
+            text-decoration: none;
+            backdrop-filter: var(--blur-sm);
+            -webkit-backdrop-filter: var(--blur-sm);
+        }
+
+        .btn-new:hover {
+            border-color: var(--ocean-cyan);
+            color: var(--ocean-cyan);
+            background: var(--ocean-pale);
+        }
+
+        /* Input Summary Pills */
+        .input-pills {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 24px;
+        }
+
+        .input-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 6px 14px;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-pill);
+            font-size: 0.73rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            backdrop-filter: var(--blur-sm);
+            -webkit-backdrop-filter: var(--blur-sm);
+        }
+
+        .input-pill strong {
+            color: var(--text-primary);
+            font-weight: 700;
+        }
+
+        /* Hero Stat Card */
+        .hero-stat {
+            background: var(--glass-bg-card);
+            backdrop-filter: var(--blur) var(--saturate);
+            -webkit-backdrop-filter: var(--blur) var(--saturate);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-2xl);
+            padding: 36px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 40px;
+            box-shadow: var(--glass-shadow);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-stat::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--ocean-cyan), var(--teal), transparent);
+            opacity: 0.6;
+        }
+
+        .hero-stat-info { flex: 1; }
+
+        .hero-stat-label {
+            font-size: 0.68rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            color: var(--ocean-cyan);
+            margin-bottom: 10px;
+        }
+
+        .hero-stat-value {
+            font-size: 3.5rem;
+            font-weight: 900;
+            letter-spacing: -2px;
+            line-height: 1;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, var(--text-primary) 0%, var(--ocean-light) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero-stat-value span {
+            font-size: 1.3rem;
+            font-weight: 500;
+            -webkit-text-fill-color: var(--text-muted);
+            margin-left: 4px;
+        }
+
+        .hero-stat-zone {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .hero-stat-zone strong { color: var(--text-primary); -webkit-text-fill-color: initial; }
+
+        .hero-chart-wrap {
+            width: 170px; height: 170px;
+            flex-shrink: 0;
+        }
+
+        /* Metrics Grid */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 14px;
+            margin-bottom: 20px;
+        }
+
+        .metric-card {
+            background: var(--glass-bg-card);
+            backdrop-filter: var(--blur) var(--saturate);
+            -webkit-backdrop-filter: var(--blur) var(--saturate);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-lg);
+            padding: 20px;
+            transition: var(--transition);
+            box-shadow: var(--glass-shadow);
+        }
+
+        .metric-card:hover {
+            transform: translateY(-3px);
+            background: var(--glass-bg-elevated);
+            border-color: var(--glass-border-bright);
+        }
+
+        .metric-icon {
+            width: 40px; height: 40px;
+            border-radius: var(--radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.15rem;
+            margin-bottom: 14px;
+        }
+
+        .metric-icon.ocean { background: var(--ocean-pale); }
+        .metric-icon.warm { background: var(--amber-pale); }
+        .metric-icon.emerald { background: var(--emerald-pale); }
+        .metric-icon.rose { background: var(--rose-pale); }
+        .metric-icon.violet { background: var(--violet-pale); }
+
+        .metric-label {
+            font-size: 0.65rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+        }
+
+        .metric-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .metric-value.positive { color: var(--emerald); }
+        .metric-value.negative { color: var(--rose); }
+
+        .metric-value small {
+            font-size: 0.7rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            margin-left: 2px;
+        }
+
+        /* Chart Card */
+        .chart-card {
+            background: var(--glass-bg-card);
+            backdrop-filter: var(--blur) var(--saturate);
+            -webkit-backdrop-filter: var(--blur) var(--saturate);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-xl);
+            padding: 28px;
+            margin-bottom: 20px;
+            box-shadow: var(--glass-shadow);
+        }
+
+        .chart-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+
+        .chart-title {
+            font-size: 0.95rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .chart-tag {
+            font-size: 0.58rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            color: var(--text-muted);
+            background: var(--glass-bg);
+            padding: 4px 10px;
+            border-radius: var(--radius-pill);
+            border: 1px solid var(--glass-border);
+        }
+
+        /* AI Card */
+        .ai-card {
+            background: var(--glass-bg-card);
+            backdrop-filter: var(--blur) var(--saturate);
+            -webkit-backdrop-filter: var(--blur) var(--saturate);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-2xl);
+            padding: 32px;
+            box-shadow: var(--glass-shadow);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .ai-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--teal), var(--violet), transparent);
+            opacity: 0.5;
+        }
+
+        .ai-header {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 20px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .ai-avatar {
+            width: 44px; height: 44px;
+            background: linear-gradient(135deg, var(--teal) 0%, var(--ocean-cyan) 100%);
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+            flex-shrink: 0;
+            box-shadow: 0 4px 20px var(--teal-glow);
+        }
+
+        .ai-header-text h3 {
+            font-size: 1.05rem;
+            font-weight: 700;
+        }
+
+        .ai-header-text p {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            margin-top: 1px;
+        }
+
+        .ai-content {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            line-height: 1.8;
+        }
+
+        .ai-content p { margin-bottom: 10px; }
+        .ai-content ul { padding-left: 20px; margin-bottom: 12px; }
+        .ai-content li { margin-bottom: 8px; }
+        .ai-content strong { color: var(--text-primary); font-weight: 600; }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 20px 40px;
+            border-top: 1px solid var(--glass-border);
+            color: var(--text-muted);
+            font-size: 0.7rem;
+            font-weight: 500;
+            background: var(--glass-bg);
+            backdrop-filter: var(--blur-sm);
+            -webkit-backdrop-filter: var(--blur-sm);
+        }
+
+        /* Animations */
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .fade-in { animation: fadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) both; }
+        .s1 { animation-delay: 0.05s; }
+        .s2 { animation-delay: 0.1s; }
+        .s3 { animation-delay: 0.15s; }
+        .s4 { animation-delay: 0.2s; }
+        .s5 { animation-delay: 0.25s; }
+        .s6 { animation-delay: 0.3s; }
+
+        /* ===== Responsive ===== */
+        @media (max-width: 960px) {
+            .split-layout {
+                grid-template-columns: 1fr;
+                gap: 32px;
+                min-height: auto;
+            }
+            .hero-side { text-align: center; }
+            .hero-side > p { margin: 0 auto 24px; }
+            .feature-pills { justify-content: center; }
+            .zone-cards-grid { max-width: 360px; margin: 0 auto; }
+            .main-content { padding: 24px 16px; }
+            .topbar { padding: 12px 16px; }
+            .hero-stat {
+                flex-direction: column;
+                text-align: center;
+                gap: 20px;
+            }
+            .hero-chart-wrap { width: 140px; height: 140px; }
+            .metrics-grid { grid-template-columns: repeat(2, 1fr); }
+            .form-grid { grid-template-columns: 1fr; }
+            .form-group.full-width,
+            .btn-analyze { grid-column: span 1; }
+            .input-pills { justify-content: center; }
+            .results-header {
+                flex-direction: column;
+                gap: 12px;
+                align-items: flex-start;
+            }
+        }
+
+        @media (max-width: 500px) {
+            .hero-side h1 { font-size: 2rem; }
+            .metrics-grid { grid-template-columns: 1fr; }
+            .topbar-badge, .topbar-status { display: none; }
+            .zone-cards-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Ambient Mesh Background -->
+<div class="ambient-bg">
+    <div class="mesh-orb mesh-orb-1"></div>
+    <div class="mesh-orb mesh-orb-2"></div>
+    <div class="mesh-orb mesh-orb-3"></div>
+    <div class="mesh-orb mesh-orb-4"></div>
+</div>
+
+<!-- Fluid Ribbon Canvas -->
+<canvas id="fluidCanvas"></canvas>
+
+<!-- Loading Overlay -->
+<div class="loading-overlay" id="loadingOverlay">
+    <div class="loading-visual">
+        <div class="loading-ring"></div>
+        <div class="loading-ring-icon">💧</div>
+    </div>
+    <div class="loading-text">
+        <h3>Analyzing Water Demand</h3>
+        <p>Running ML model & generating AI directives...</p>
+    </div>
+    <div class="loading-progress">
+        <div class="loading-progress-bar"></div>
+    </div>
+    <div class="loading-steps">
+        <div class="loading-step" id="step1">
+            <div class="loading-step-dot"></div>
+            <span>Processing zone parameters</span>
+        </div>
+        <div class="loading-step" id="step2">
+            <div class="loading-step-dot"></div>
+            <span>Running Random Forest prediction</span>
+        </div>
+        <div class="loading-step" id="step3">
+            <div class="loading-step-dot"></div>
+            <span>Generating AI recommendations</span>
+        </div>
+    </div>
+</div>
+
+<div class="app-wrapper">
+    <!-- Top Nav -->
+    <nav class="topbar">
+        <div class="topbar-brand">
+            <div class="topbar-logo">💧</div>
+            <div>
+                <div class="topbar-title">HydroIntel</div>
+                <div class="topbar-subtitle">Water Intelligence</div>
+            </div>
+        </div>
+        <div class="topbar-right">
+            <div class="topbar-status">
+                <span class="dot-green"></span>
+                System Online
+            </div>
+            <div class="topbar-badge">
+                <span class="dot"></span>
+                ML + GenAI
+            </div>
+        </div>
+    </nav>
+
+    <main class="main-content">
+
+        {% if prediction is none %}
+        <!-- ==================== INPUT PAGE ==================== -->
+        <div class="input-page">
+            <div class="split-layout">
+                <!-- Left Hero -->
+                <div class="hero-side fade-in">
+                    <div class="hero-tag">💧 Hyderabad GHMC</div>
+                    <h1>Predict <span class="highlight">Water Demand</span> With AI</h1>
+                    <p>Configure zone parameters and let our Random Forest model + Google Gemini AI generate precise demand forecasts and operational recommendations.</p>
+
+                    <div class="feature-pills">
+                        <div class="pill"><span class="pill-icon">🧠</span> ML Prediction</div>
+                        <div class="pill"><span class="pill-icon">🤖</span> AI Directives</div>
+                        <div class="pill"><span class="pill-icon">📊</span> Zone Analytics</div>
+                        <div class="pill"><span class="pill-icon">⚡</span> Real-Time</div>
+                    </div>
+
+                    <div class="zone-cards-section">
+                        <div class="zone-cards-label">Active GHMC Zones</div>
+                        <div class="zone-cards-grid">
+                            <div class="zone-mini-card">
+                                <div class="zname">Banjara Hills</div>
+                                <div class="zstat">47.5 ML avg</div>
+                            </div>
+                            <div class="zone-mini-card">
+                                <div class="zname">Kukatpally</div>
+                                <div class="zstat">78.2 ML avg</div>
+                            </div>
+                            <div class="zone-mini-card">
+                                <div class="zname">LB Nagar</div>
+                                <div class="zstat">62.4 ML avg</div>
+                            </div>
+                            <div class="zone-mini-card">
+                                <div class="zname">Malkajgiri</div>
+                                <div class="zstat">54.1 ML avg</div>
+                            </div>
+                            <div class="zone-mini-card">
+                                <div class="zname">Secunderabad</div>
+                                <div class="zstat">51.8 ML avg</div>
+                            </div>
+                            <div class="zone-mini-card">
+                                <div class="zname">Uppal</div>
+                                <div class="zstat">43.6 ML avg</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Form -->
+                <div class="form-side fade-in s2">
+                    <div class="form-card">
+                        <div class="form-card-header">
+                            <div class="form-card-title">⚙️ Configure Analysis</div>
+                            <div class="form-card-badge">v2.0</div>
+                        </div>
+                        <form method="POST" action="/predict" id="predictForm">
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label><span class="label-icon">📍</span> GHMC Zone</label>
+                                    <input type="hidden" name="zone" id="zoneInput" value="" required>
+                                    <div class="custom-select" id="zoneSelect">
+                                        <div class="custom-select-trigger" id="zoneTrigger">
+                                            <div class="trigger-content">
+                                                <div class="trigger-zone-dot" id="triggerDot" style="opacity: 0.3;"></div>
+                                                <span class="trigger-zone-name" id="triggerName" style="color: var(--text-muted); font-weight: 500;">Select Zone...</span>
+                                            </div>
+                                            <span class="trigger-arrow">▼</span>
+                                        </div>
+                                        <div class="custom-select-options" id="zoneOptions">
+                                            <div class="custom-option" data-value="Banjara Hills" data-pop="65200" data-dispatch="47.5">
+                                                <div class="option-left">
+                                                    <div class="option-dot"></div>
+                                                    <div class="option-name">Banjara Hills</div>
+                                                </div>
+                                                <span class="option-check">✓</span>
+                                            </div>
+                                            <div class="custom-option" data-value="Kukatpally" data-pop="315500" data-dispatch="78.2">
+                                                <div class="option-left">
+                                                    <div class="option-dot"></div>
+                                                    <div class="option-name">Kukatpally</div>
+                                                </div>
+                                                <span class="option-check">✓</span>
+                                            </div>
+                                            <div class="custom-option" data-value="LB Nagar" data-pop="385000" data-dispatch="62.4">
+                                                <div class="option-left">
+                                                    <div class="option-dot"></div>
+                                                    <div class="option-name">LB Nagar</div>
+                                                </div>
+                                                <span class="option-check">✓</span>
+                                            </div>
+                                            <div class="custom-option" data-value="Malkajgiri" data-pop="110000" data-dispatch="54.1">
+                                                <div class="option-left">
+                                                    <div class="option-dot"></div>
+                                                    <div class="option-name">Malkajgiri</div>
+                                                </div>
+                                                <span class="option-check">✓</span>
+                                            </div>
+                                            <div class="custom-option" data-value="Secunderabad" data-pop="250000" data-dispatch="51.8">
+                                                <div class="option-left">
+                                                    <div class="option-dot"></div>
+                                                    <div class="option-name">Secunderabad</div>
+                                                </div>
+                                                <span class="option-check">✓</span>
+                                            </div>
+                                            <div class="custom-option" data-value="Uppal" data-pop="95000" data-dispatch="43.6">
+                                                <div class="option-left">
+                                                    <div class="option-dot"></div>
+                                                    <div class="option-name">Uppal</div>
+                                                </div>
+                                                <span class="option-check">✓</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label><span class="label-icon">👥</span> Population</label>
+                                    <input type="number" name="population" id="population" placeholder="e.g. 315,500" required>
+                                </div>
+
+                                <div class="form-group">
+                                    <label><span class="label-icon">🌡️</span> Temperature</label>
+                                    <div class="input-wrap">
+                                        <input type="number" step="0.1" name="temperature" id="temperature" placeholder="e.g. 32.5" class="has-unit" required>
+                                        <span class="input-unit">°C</span>
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label><span class="label-icon">🌧️</span> Rainfall</label>
+                                    <div class="input-wrap">
+                                        <input type="number" step="0.1" name="rainfall" id="rainfall" placeholder="e.g. 0.0" class="has-unit" required>
+                                        <span class="input-unit">mm</span>
+                                    </div>
+                                </div>
+
+                                <div class="form-group full-width">
+                                    <label><span class="label-icon">📦</span> Previous Day Dispatch</label>
+                                    <div class="input-wrap">
+                                        <input type="number" step="0.01" name="prev_dispatch" id="prev_dispatch" placeholder="e.g. 47.3" class="has-unit" required>
+                                        <span class="input-unit">ML</span>
+                                    </div>
+                                </div>
+
+                                <button type="submit" class="btn-analyze">
+                                    Run Predictive Analysis
+                                    <span class="btn-icon">→</span>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Custom Dropdown + Loading Script -->
+        <script>
+            // ---- Custom Zone Dropdown ----
+            const selectEl = document.getElementById('zoneSelect');
+            const trigger = document.getElementById('zoneTrigger');
+            const hiddenInput = document.getElementById('zoneInput');
+            const triggerName = document.getElementById('triggerName');
+            const triggerDot = document.getElementById('triggerDot');
+            const options = document.querySelectorAll('.custom-option');
+
+            trigger.addEventListener('click', (e) => {
+                e.stopPropagation();
+                selectEl.classList.toggle('open');
+            });
+
+            options.forEach(opt => {
+                opt.addEventListener('click', () => {
+                    const val = opt.dataset.value;
+                    const pop = opt.dataset.pop;
+                    const dispatch = opt.dataset.dispatch;
+
+                    // Update hidden input
+                    hiddenInput.value = val;
+
+                    // Update trigger UI
+                    triggerName.textContent = val;
+                    triggerName.style.color = 'var(--text-primary)';
+                    triggerName.style.fontWeight = '600';
+                    triggerDot.style.opacity = '1';
+
+                    // Auto-fill form fields with default values for selected zone
+                    document.getElementById('population').value = pop;
+                    document.getElementById('temperature').value = 32.5;
+                    document.getElementById('rainfall').value = 0.0;
+                    document.getElementById('prev_dispatch').value = dispatch;
+
+                    // Update selected checkmark state
+                    options.forEach(o => o.classList.remove('selected'));
+                    opt.classList.add('selected');
+
+                    // Close dropdown
+                    selectEl.classList.remove('open');
+                });
+            });
+
+            // Close on outside click
+            document.addEventListener('click', (e) => {
+                if (!selectEl.contains(e.target)) {
+                    selectEl.classList.remove('open');
+                }
+            });
+
+            // ---- Loading animation on submit ----
+            document.getElementById('predictForm').addEventListener('submit', function(e) {
+                if (!hiddenInput.value) {
+                    e.preventDefault();
+                    selectEl.classList.add('open');
+                    return;
+                }
+
+                const overlay = document.getElementById('loadingOverlay');
+                overlay.classList.add('active');
+
+                const steps = ['step1', 'step2', 'step3'];
+                steps.forEach((id, i) => {
+                    setTimeout(() => {
+                        document.getElementById(id).classList.add('active');
+                        if (i > 0) {
+                            document.getElementById(steps[i - 1]).classList.remove('active');
+                            document.getElementById(steps[i - 1]).classList.add('done');
+                        }
+                    }, i * 2200);
+                });
+            });
+        </script>
+
+        {% else %}
+        <!-- ==================== RESULTS PAGE ==================== -->
+        <div class="results-page">
+            <div class="results-header fade-in">
+                <div class="results-header-left">
+                    <h2>📊 Analysis Results</h2>
+                    <p>Forecast generated for {{ form_data.zone }} zone</p>
+                </div>
+                <a href="/" class="btn-new">← New Analysis</a>
+            </div>
+
+            <!-- Input Summary Pills -->
+            <div class="input-pills fade-in s1">
+                <div class="input-pill">📍 <strong>{{ form_data.zone }}</strong></div>
+                <div class="input-pill">👥 <strong>{{ "{:,.0f}".format(form_data.population) }}</strong></div>
+                <div class="input-pill">🌡️ <strong>{{ form_data.temperature }}°C</strong></div>
+                <div class="input-pill">🌧️ <strong>{{ form_data.rainfall }} mm</strong></div>
+                <div class="input-pill">📦 <strong>{{ form_data.prev_dispatch }} ML</strong> prev</div>
+            </div>
+
+            <!-- Hero Prediction -->
+            <div class="hero-stat fade-in s2">
+                <div class="hero-stat-info">
+                    <div class="hero-stat-label">Forecasted Water Demand</div>
+                    <div class="hero-stat-value">{{ prediction }}<span>ML</span></div>
+                    <div class="hero-stat-zone">Target: <strong>{{ form_data.zone }}</strong> zone</div>
+                </div>
+                <div class="hero-chart-wrap">
+                    <canvas id="gaugeChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Metrics -->
+            {% set baseline = zone_benchmarks.get(form_data.zone, prediction) %}
+            {% set variance = (prediction - baseline) | round(2) %}
+
+            <div class="metrics-grid fade-in s3">
+                <div class="metric-card">
+                    <div class="metric-icon ocean">📊</div>
+                    <div class="metric-label">Zone Baseline</div>
+                    <div class="metric-value">{{ baseline }}<small>ML</small></div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-icon {% if variance > 0 %}rose{% else %}emerald{% endif %}">
+                        {% if variance > 0 %}📈{% else %}📉{% endif %}
+                    </div>
+                    <div class="metric-label">Variance</div>
+                    <div class="metric-value {{ 'negative' if variance > 0 else 'positive' }}">
+                        {{ '+' if variance > 0 else '' }}{{ variance }}<small>ML</small>
+                    </div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-icon warm">🌡️</div>
+                    <div class="metric-label">Temperature</div>
+                    <div class="metric-value">{{ form_data.temperature }}<small>°C</small></div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-icon emerald">🌧️</div>
+                    <div class="metric-label">Rainfall</div>
+                    <div class="metric-value">{{ form_data.rainfall }}<small>mm</small></div>
+                </div>
+            </div>
+
+            <!-- Zone Chart -->
+            <div class="chart-card fade-in s4">
+                <div class="chart-header">
+                    <div class="chart-title">📊 Zone Demand Distribution</div>
+                    <div class="chart-tag">All GHMC Zones</div>
+                </div>
+                <canvas id="zoneChart" height="95"></canvas>
+            </div>
+
+            <!-- AI Recommendations -->
+            <div class="ai-card fade-in s5">
+                <div class="ai-header">
+                    <div class="ai-avatar">🤖</div>
+                    <div class="ai-header-text">
+                        <h3>Operational Directives</h3>
+                        <p>AI-generated via Google Gemini</p>
+                    </div>
+                </div>
+                <div class="ai-content">
+                    {{ ai_recommendation | safe }}
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Script -->
+        <script>
+            // Gauge Chart
+            const gaugeCtx = document.getElementById('gaugeChart').getContext('2d');
+            const prediction = {{ prediction }};
+            const baseline = {{ zone_benchmarks.get(form_data.zone, prediction) }};
+            const maxVal = Math.max(prediction, baseline) * 1.4;
+
+            new Chart(gaugeCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Predicted', 'Remaining'],
+                    datasets: [{
+                        data: [prediction, maxVal - prediction],
+                        backgroundColor: [
+                            prediction > baseline ? '#FB7185' : '#34D399',
+                            'rgba(255, 255, 255, 0.06)'
+                        ],
+                        borderWidth: 0,
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: true,
+                    cutout: '75%', rotation: -90, circumference: 180,
+                    plugins: { legend: { display: false }, tooltip: { enabled: false } }
+                },
+                plugins: [{
+                    id: 'gaugeText',
+                    afterDraw(chart) {
+                        const { ctx, chartArea: { left, right, bottom } } = chart;
+                        const cx = (left + right) / 2;
+                        const cy = bottom - 10;
+                        ctx.save();
+                        ctx.textAlign = 'center';
+                        ctx.fillStyle = prediction > baseline ? '#FB7185' : '#34D399';
+                        ctx.font = '700 13px Inter';
+                        ctx.fillText(prediction > baseline ? '▲ Above' : '▼ Below', cx, cy - 4);
+                        ctx.fillStyle = 'rgba(255,255,255,0.35)';
+                        ctx.font = '500 11px Inter';
+                        ctx.fillText('baseline', cx, cy + 12);
+                        ctx.restore();
+                    }
+                }]
+            });
+
+            // Zone Bar Chart
+            const zoneCtx = document.getElementById('zoneChart').getContext('2d');
+            const labels = {{ zone_benchmarks.keys() | list | tojson }};
+            const baselineData = {{ zone_benchmarks.values() | list | tojson }};
+            const currentZone = {{ form_data.zone | tojson }};
+
+            const chartData = labels.map((z, i) => z === currentZone ? prediction : baselineData[i]);
+
+            new Chart(zoneCtx, {
+                type: 'bar',
+                data: {
+                    labels,
+                    datasets: [{
+                        label: 'Dispatch (ML)',
+                        data: chartData,
+                        backgroundColor: labels.map(z => z === currentZone ? 'rgba(56, 189, 248, 0.7)' : 'rgba(255, 255, 255, 0.06)'),
+                        borderColor: labels.map(z => z === currentZone ? '#38BDF8' : 'rgba(255, 255, 255, 0.1)'),
+                        borderWidth: 1,
+                        borderRadius: 8,
+                        borderSkipped: false
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: 'rgba(15, 23, 42, 0.95)',
+                            titleColor: '#38BDF8',
+                            bodyColor: 'rgba(255,255,255,0.8)',
+                            borderColor: 'rgba(255,255,255,0.1)',
+                            borderWidth: 1,
+                            padding: 12,
+                            cornerRadius: 8,
+                            displayColors: false,
+                            titleFont: { family: 'Inter', weight: '600' },
+                            bodyFont: { family: 'Inter' },
+                            callbacks: { label: c => c.parsed.y + ' ML' }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: 'rgba(255, 255, 255, 0.04)' },
+                            ticks: {
+                                color: 'rgba(255,255,255,0.35)',
+                                font: { family: 'Inter', size: 11 },
+                                callback: v => v + ' ML'
+                            }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: {
+                                color: 'rgba(255,255,255,0.6)',
+                                font: { family: 'Inter', size: 12, weight: '500' }
+                            }
+                        }
+                    }
+                }
+            });
+        </script>
+        {% endif %}
+
+    </main>
+
+    <footer class="footer">
+        HydroIntel © 2026 — Municipal Water Intelligence Platform · Hyderabad GHMC
+    </footer>
+</div>
+
+<!-- Fluid Ribbon Background -->
+<script>
+(function() {
+    const canvas = document.getElementById('fluidCanvas');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+
+    let width, height;
+    let time = 0;
+
+    function resize() {
+        width = canvas.width = window.innerWidth;
+        height = canvas.height = window.innerHeight;
+    }
+
+    const ribbons = [
+        {
+            amplitude: 140,
+            frequency: 0.0018,
+            speed: 0.006,
+            yOffset: 0.45,
+            thickness: 180,
+            colorGrad: ['rgba(56, 189, 248, 0.12)', 'rgba(14, 165, 233, 0.18)', 'rgba(2, 132, 199, 0.06)']
+        },
+        {
+            amplitude: 110,
+            frequency: 0.0022,
+            speed: 0.008,
+            yOffset: 0.48,
+            thickness: 140,
+            colorGrad: ['rgba(45, 212, 191, 0.14)', 'rgba(56, 189, 248, 0.12)', 'rgba(14, 165, 233, 0.05)']
+        },
+        {
+            amplitude: 80,
+            frequency: 0.0028,
+            speed: 0.005,
+            yOffset: 0.42,
+            thickness: 100,
+            colorGrad: ['rgba(167, 139, 250, 0.1)', 'rgba(56, 189, 248, 0.12)', 'rgba(45, 212, 191, 0.04)']
+        }
+    ];
+
+    function drawRibbon(ribbon) {
+        ctx.save();
+        ctx.beginPath();
+
+        const baseY = height * ribbon.yOffset;
+        const pointsUpper = [];
+        const pointsLower = [];
+
+        const step = 8;
+        for (let x = -50; x <= width + 50; x += step) {
+            const sin1 = Math.sin(x * ribbon.frequency + time * ribbon.speed);
+            const sin2 = Math.cos(x * ribbon.frequency * 0.7 - time * ribbon.speed * 0.8);
+            const waveY = baseY + (sin1 * ribbon.amplitude) + (sin2 * (ribbon.amplitude * 0.4));
+            const currentThickness = ribbon.thickness * (0.8 + 0.3 * Math.sin(x * 0.0015 + time * 0.004));
+
+            pointsUpper.push({ x: x, y: waveY - currentThickness * 0.5 });
+            pointsLower.push({ x: x, y: waveY + currentThickness * 0.5 });
+        }
+
+        ctx.moveTo(pointsUpper[0].x, pointsUpper[0].y);
+        for (let i = 1; i < pointsUpper.length; i++) {
+            ctx.lineTo(pointsUpper[i].x, pointsUpper[i].y);
+        }
+
+        for (let i = pointsLower.length - 1; i >= 0; i--) {
+            ctx.lineTo(pointsLower[i].x, pointsLower[i].y);
+        }
+        ctx.closePath();
+
+        const grad = ctx.createLinearGradient(0, baseY - ribbon.thickness, width, baseY + ribbon.thickness);
+        grad.addColorStop(0, ribbon.colorGrad[0]);
+        grad.addColorStop(0.5, ribbon.colorGrad[1]);
+        grad.addColorStop(1, ribbon.colorGrad[2]);
+
+        ctx.fillStyle = grad;
+        ctx.shadowColor = 'rgba(56, 189, 248, 0.08)';
+        ctx.shadowBlur = 40;
+        ctx.fill();
+        ctx.restore();
+    }
+
+    function animate() {
+        ctx.clearRect(0, 0, width, height);
+        time += 1;
+        ribbons.forEach(ribbon => drawRibbon(ribbon));
+        requestAnimationFrame(animate);
+    }
+
+    window.addEventListener('resize', resize);
+    resize();
+    animate();
+})();
+</script>
+
+</body>
+</html>

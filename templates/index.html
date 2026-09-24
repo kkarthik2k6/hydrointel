@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HydroIntel | Municipal Water Intelligence Dashboard</title>
+    <meta name="description" content="AI-powered municipal water demand forecasting and operational intelligence for Hyderabad GHMC zones.">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- HydroIntel Liquid Glass Design System -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/liquid_glass.css') }}?v=2.5">
+
+    <!-- HydroIntel Client Engine -->
+    <script src="{{ url_for('static', filename='js/liquid_glass.js') }}?v=2.5" defer></script>
+</head>
+<body>
+
+<!-- Ambient Mesh Background -->
+<div class="ambient-bg">
+    <div class="mesh-orb mesh-orb-1"></div>
+    <div class="mesh-orb mesh-orb-2"></div>
+    <div class="mesh-orb mesh-orb-3"></div>
+    <div class="mesh-orb mesh-orb-4"></div>
+</div>
+
+<!-- Fluid Ribbon Canvas Animation -->
+<canvas id="fluidCanvas"></canvas>
+
+<!-- Toast Notification -->
+<div class="toast-notify" id="toastNotify">Copied to clipboard!</div>
+
+<!-- ============================================================
+     Concept 1: Neural Water Core & Telemetry Terminal Loader
+     ============================================================ -->
+<div class="loading-overlay" id="loadingOverlay">
+    <!-- Live Input Telemetry HUD -->
+    <div class="loading-hud-pill">
+        <span class="hud-dot"></span>
+        <span id="hudZone">📍 Banjara Hills</span> · 
+        <span id="hudTemp">🌡️ 32.5°C</span> · 
+        <span id="hudPop">👥 65,200</span> · 
+        <span id="hudRain">🌧️ 0.0mm</span>
+    </div>
+
+    <!-- Centerpiece: Pulsing Neural Water Core & Sonar Waves -->
+    <div class="neural-core-wrap">
+        <div class="sonar-wave sonar-1"></div>
+        <div class="sonar-wave sonar-2"></div>
+        <div class="sonar-wave sonar-3"></div>
+        <div class="neural-core">
+            <div class="core-droplet">💧</div>
+            <div class="core-particle p1"></div>
+            <div class="core-particle p2"></div>
+            <div class="core-particle p3"></div>
+            <div class="core-particle p4"></div>
+        </div>
+    </div>
+
+    <!-- Progress Status & Percent -->
+    <div class="loading-header">
+        <div class="loading-title-row">
+            <h3 id="loadingMainTitle">Analyzing Water Telemetry</h3>
+            <span class="loading-pct" id="loadingPct">0%</span>
+        </div>
+        <p id="loadingSubTitle">Executing Random Forest Ensemble & Querying Gemini AI...</p>
+    </div>
+
+    <!-- Progress Bar Track -->
+    <div class="loading-track">
+        <div class="loading-bar" id="loadingBar"></div>
+    </div>
+
+    <!-- Live Futuristic Terminal Console -->
+    <div class="loading-terminal">
+        <div class="terminal-bar">
+            <div class="terminal-dots">
+                <span class="tdot red"></span>
+                <span class="tdot yellow"></span>
+                <span class="tdot green"></span>
+            </div>
+            <div class="terminal-label">HYDROINTEL_NEURAL_KERNEL v2.4</div>
+            <div class="terminal-status"><span class="blink-dot"></span> LIVE</div>
+        </div>
+        <div class="terminal-logs" id="terminalLogs"></div>
+    </div>
+</div>
+
+<div class="app-wrapper">
+    <!-- Top Navigation Bar -->
+    <nav class="topbar">
+        <a href="/" class="topbar-brand">
+            <div class="topbar-logo">💧</div>
+            <div>
+                <div class="topbar-title">HydroIntel</div>
+                <div class="topbar-subtitle">Water Intelligence</div>
+            </div>
+        </a>
+        <div class="topbar-right">
+            <!-- Live IST Clock -->
+            <div class="topbar-clock">
+                <span class="radar-pulse"></span>
+                <span id="liveClock">--:--:-- IST</span>
+            </div>
+
+            <!-- Light / Dark Mode Toggle -->
+            <button type="button" class="mode-toggle-btn" id="modeToggle" title="Toggle Light / Dark Mode">
+                <span class="mode-icon-dark">🌙</span>
+                <span class="mode-icon-light">☀️</span>
+                <span class="mode-label" id="modeLabel">Dark</span>
+            </button>
+
+            <!-- Accent Tone Switcher -->
+            <div class="theme-switcher" title="Change Ambient Glow Tone">
+                <div class="theme-dot active" data-t="cyan" title="Ocean Cyan"></div>
+                <div class="theme-dot" data-t="emerald" title="Emerald Green"></div>
+                <div class="theme-dot" data-t="violet" title="Electric Violet"></div>
+                <div class="theme-dot" data-t="amber" title="Solar Amber"></div>
+            </div>
+
+            <div class="topbar-badge">
+                <span style="font-size: 0.8rem;">⚡</span>
+                ML + GenAI
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+
+        {% if prediction is none %}
+        <!-- ==================== 1. HOMEPAGE / INPUT PAGE ==================== -->
+        <div class="input-page">
+            <div class="split-layout">
+                <!-- Left Hero Section -->
+                <div class="hero-side fade-in">
+                    <div class="hero-tag">💧 Hyderabad GHMC</div>
+                    <h1>Predict <span class="highlight">Water Demand</span> With AI</h1>
+                    <p>Configure zone parameters and let our Random Forest model + Google Gemini AI generate precise demand forecasts and operational recommendations.</p>
+
+                    <div class="feature-pills">
+                        <div class="pill"><span class="pill-icon">🧠</span> ML Prediction</div>
+                        <div class="pill"><span class="pill-icon">🤖</span> AI Directives</div>
+                        <div class="pill"><span class="pill-icon">📊</span> Zone Analytics</div>
+                        <div class="pill"><span class="pill-icon">⚡</span> Real-Time</div>
+                    </div>
+
+                    <!-- GHMC Zone Mini-Cards -->
+                    <div class="zone-cards-section">
+                        <div class="zone-cards-label">Active GHMC Zones</div>
+                        <div class="zone-cards-grid">
+                            <div class="zone-mini-card" data-zone="Banjara Hills" data-pop="65200" data-dispatch="47.5">
+                                <div class="zname">Banjara Hills</div>
+                                <div class="zstat">47.5 ML avg</div>
+                            </div>
+                            <div class="zone-mini-card" data-zone="Kukatpally" data-pop="315500" data-dispatch="78.2">
+                                <div class="zname">Kukatpally</div>
+                                <div class="zstat">78.2 ML avg</div>
+                            </div>
+                            <div class="zone-mini-card" data-zone="LB Nagar" data-pop="385000" data-dispatch="62.4">
+                                <div class="zname">LB Nagar</div>
+                                <div class="zstat">62.4 ML avg</div>
+                            </div>
+                            <div class="zone-mini-card" data-zone="Malkajgiri" data-pop="110000" data-dispatch="54.1">
+                                <div class="zname">Malkajgiri</div>
+                                <div class="zstat">54.1 ML avg</div>
+                            </div>
+                            <div class="zone-mini-card" data-zone="Secunderabad" data-pop="250000" data-dispatch="51.8">
+                                <div class="zname">Secunderabad</div>
+                                <div class="zstat">51.8 ML avg</div>
+                            </div>
+                            <div class="zone-mini-card" data-zone="Uppal" data-pop="95000" data-dispatch="43.6">
+                                <div class="zname">Uppal</div>
+                                <div class="zstat">43.6 ML avg</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Form (3D Glass Physics) -->
+                <div class="form-side fade-in s2">
+                    <div class="form-card card-tilt" id="formCard">
+                        <div class="card-glare"></div>
+                        <div class="form-card-header">
+                            <div class="form-card-title">⚙️ Configure Analysis</div>
+                            <div class="form-card-badge">v2.0</div>
+                        </div>
+                        <form method="POST" action="/predict" id="predictForm">
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label><span class="label-icon">📍</span> GHMC Zone</label>
+                                    <input type="hidden" name="zone" id="zoneInput" value="" required>
+                                    <div class="custom-select" id="zoneSelect">
+                                        <div class="custom-select-trigger" id="zoneTrigger">
+                                            <div class="trigger-content">
+                                                <div class="trigger-zone-dot" id="triggerDot" style="opacity: 0.3;"></div>
+                                                <span class="trigger-zone-name" id="triggerName" style="color: var(--text-muted); font-weight: 500;">Select Zone...</span>
+                                            </div>
+                                            <span class="trigger-arrow">▼</span>
+                                        </div>
+                                        <div class="custom-select-options" id="zoneOptions">
+                                            <div class="custom-option" data-value="Banjara Hills" data-pop="65200" data-dispatch="47.5">
+                                                <div class="option-left">
+                                                    <div class="option-dot"></div>
+                                                    <div class="option-name">Banjara Hills</div>
+                                                </div>
+                                                <span class="option-check">✓</span>
+                                            </div>
+                                            <div class="custom-option" data-value="Kukatpally" data-pop="315500" data-dispatch="78.2">
+                                                <div class="option-left">
+                                                    <div class="option-dot"></div>
+                                                    <div class="option-name">Kukatpally</div>
+                                                </div>
+                                                <span class="option-check">✓</span>
+                                            </div>
+                                            <div class="custom-option" data-value="LB Nagar" data-pop="385000" data-dispatch="62.4">
+                                                <div class="option-left">
+                                                    <div class="option-dot"></div>
+                                                    <div class="option-name">LB Nagar</div>
+                                                </div>
+                                                <span class="option-check">✓</span>
+                                            </div>
+                                            <div class="custom-option" data-value="Malkajgiri" data-pop="110000" data-dispatch="54.1">
+                                                <div class="option-left">
+                                                    <div class="option-dot"></div>
+                                                    <div class="option-name">Malkajgiri</div>
+                                                </div>
+                                                <span class="option-check">✓</span>
+                                            </div>
+                                            <div class="custom-option" data-value="Secunderabad" data-pop="250000" data-dispatch="51.8">
+                                                <div class="option-left">
+                                                    <div class="option-dot"></div>
+                                                    <div class="option-name">Secunderabad</div>
+                                                </div>
+                                                <span class="option-check">✓</span>
+                                            </div>
+                                            <div class="custom-option" data-value="Uppal" data-pop="95000" data-dispatch="43.6">
+                                                <div class="option-left">
+                                                    <div class="option-dot"></div>
+                                                    <div class="option-name">Uppal</div>
+                                                </div>
+                                                <span class="option-check">✓</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label><span class="label-icon">👥</span> Population</label>
+                                    <input type="number" name="population" id="population" placeholder="e.g. 315,500" required>
+                                </div>
+
+                                <div class="form-group">
+                                    <label><span class="label-icon">🌡️</span> Temperature</label>
+                                    <div class="input-wrap">
+                                        <input type="number" step="0.1" name="temperature" id="temperature" placeholder="e.g. 32.5" class="has-unit" required>
+                                        <span class="input-unit">°C</span>
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label><span class="label-icon">🌧️</span> Rainfall</label>
+                                    <div class="input-wrap">
+                                        <input type="number" step="0.1" name="rainfall" id="rainfall" placeholder="e.g. 0.0" class="has-unit" required>
+                                        <span class="input-unit">mm</span>
+                                    </div>
+                                </div>
+
+                                <div class="form-group full-width">
+                                    <label><span class="label-icon">📦</span> Previous Day Dispatch</label>
+                                    <div class="input-wrap">
+                                        <input type="number" step="0.01" name="prev_dispatch" id="prev_dispatch" placeholder="e.g. 47.3" class="has-unit" required>
+                                        <span class="input-unit">ML</span>
+                                    </div>
+                                </div>
+
+                                <button type="submit" class="btn-analyze">
+                                    Run Predictive Analysis
+                                    <span class="btn-icon">→</span>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {% else %}
+        <!-- ==================== 2. RESULTS PAGE ==================== -->
+        <div class="results-page">
+            <div class="results-header fade-in">
+                <div class="results-header-left">
+                    <h2>📊 Analysis Results</h2>
+                    <p>Forecast generated for <strong>{{ form_data.zone }}</strong> zone</p>
+                </div>
+                <a href="/" class="btn-new">← New Analysis</a>
+            </div>
+
+            <!-- Input Summary Pills -->
+            <div class="input-pills fade-in s1">
+                <div class="input-pill">📍 <strong>{{ form_data.zone }}</strong></div>
+                <div class="input-pill">👥 <strong>{{ "{:,.0f}".format(form_data.population) }}</strong></div>
+                <div class="input-pill">🌡️ <strong>{{ form_data.temperature }}°C</strong></div>
+                <div class="input-pill">🌧️ <strong>{{ form_data.rainfall }} mm</strong></div>
+                <div class="input-pill">📦 <strong>{{ form_data.prev_dispatch }} ML</strong> prev</div>
+            </div>
+
+            <!-- Hero Prediction Card with 3D Tilt & Reservoir Level -->
+            <div class="hero-stat card-tilt fade-in s2">
+                <div class="card-glare"></div>
+                <div class="hero-stat-info">
+                    <div class="hero-stat-label">Forecasted Water Demand</div>
+                    <div class="hero-stat-value">
+                        <span id="odometerVal" data-target="{{ prediction }}">0.00</span><span>ML</span>
+                    </div>
+                    <div class="hero-stat-zone">Target: <strong>{{ form_data.zone }}</strong> zone</div>
+                </div>
+
+                <div class="hero-visuals">
+                    <!-- Liquid Reservoir Wave Tank Simulation -->
+                    <div class="reservoir-container" title="Reservoir Load Simulation">
+                        <div class="reservoir-tank">
+                            <div class="reservoir-fluid" id="reservoirFluid" style="height: 0%;">
+                                <div class="reservoir-wave"></div>
+                            </div>
+                        </div>
+                        <div class="reservoir-label">Reservoir Fill</div>
+                    </div>
+
+                    <!-- Gauge Doughnut Chart -->
+                    <div class="hero-chart-wrap">
+                        <canvas id="gaugeChart" 
+                                data-prediction="{{ prediction }}" 
+                                data-baseline="{{ zone_benchmarks.get(form_data.zone, prediction) }}">
+                        </canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Metrics Grid -->
+            {% set baseline = zone_benchmarks.get(form_data.zone, prediction) %}
+            {% set variance = (prediction - baseline) | round(2) %}
+
+            <div class="metrics-grid fade-in s3">
+                <div class="metric-card card-tilt">
+                    <div class="card-glare"></div>
+                    <div class="metric-icon ocean">📊</div>
+                    <div class="metric-label">Zone Baseline</div>
+                    <div class="metric-value"><span class="count-up" data-target="{{ baseline }}">0.0</span><small>ML</small></div>
+                </div>
+                <div class="metric-card card-tilt">
+                    <div class="card-glare"></div>
+                    <div class="metric-icon {% if variance > 0 %}rose{% else %}emerald{% endif %}">
+                        {% if variance > 0 %}📈{% else %}📉{% endif %}
+                    </div>
+                    <div class="metric-label">Variance</div>
+                    <div class="metric-value {{ 'negative' if variance > 0 else 'positive' }}">
+                        {{ '+' if variance > 0 else '' }}<span class="count-up" data-target="{{ variance }}">0.00</span><small>ML</small>
+                    </div>
+                </div>
+                <div class="metric-card card-tilt">
+                    <div class="card-glare"></div>
+                    <div class="metric-icon warm">🌡️</div>
+                    <div class="metric-label">Temperature</div>
+                    <div class="metric-value">{{ form_data.temperature }}<small>°C</small></div>
+                </div>
+                <div class="metric-card card-tilt">
+                    <div class="card-glare"></div>
+                    <div class="metric-icon emerald">🌧️</div>
+                    <div class="metric-label">Rainfall</div>
+                    <div class="metric-value">{{ form_data.rainfall }}<small>mm</small></div>
+                </div>
+            </div>
+
+            <!-- Zone Multi-View Chart Card (Bar & Radar) -->
+            <div class="chart-card card-tilt fade-in s4">
+                <div class="card-glare"></div>
+                <div class="chart-header">
+                    <div class="chart-title">📊 Zone Demand Distribution</div>
+                    <div class="chart-controls">
+                        <button type="button" class="chart-toggle-btn active" id="btnBar">📊 Bar View</button>
+                        <button type="button" class="chart-toggle-btn" id="btnRadar">🕸️ Radar Profile</button>
+                    </div>
+                </div>
+                <canvas id="zoneChart" 
+                        height="95"
+                        data-prediction="{{ prediction }}"
+                        data-labels='{{ zone_benchmarks.keys() | list | tojson }}'
+                        data-baselines='{{ zone_benchmarks.values() | list | tojson }}'
+                        data-currentzone='{{ form_data.zone }}'>
+                </canvas>
+            </div>
+
+            <!-- AI Operational Recommendations -->
+            <div class="ai-card card-tilt fade-in s5">
+                <div class="card-glare"></div>
+                <div class="ai-header">
+                    <div class="ai-header-left">
+                        <div class="ai-avatar">🤖</div>
+                        <div class="ai-header-text">
+                            <h3>Operational Directives</h3>
+                            <p>AI-generated via Google Gemini</p>
+                        </div>
+                    </div>
+                    <div class="ai-actions">
+                        <button type="button" class="ai-action-btn" id="btnCopyAI" title="Copy Directive">
+                            <span>📋</span> Copy
+                        </button>
+                        <button type="button" class="ai-action-btn" id="btnSpeakAI" title="Audio Briefing">
+                            <span id="speakIcon">🔊</span> <span id="speakText">Listen</span>
+                        </button>
+                        <button type="button" class="ai-action-btn" onclick="window.print()" title="Export PDF Briefing">
+                            <span>🖨️</span> Export PDF
+                        </button>
+                    </div>
+                </div>
+                <div class="ai-content" id="aiContent">
+                    {{ ai_recommendation | safe }}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        HydroIntel © 2026 — Municipal Water Intelligence Platform · Hyderabad GHMC
+    </footer>
+</div>
+
+</body>
+</html>
