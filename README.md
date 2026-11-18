@@ -2,105 +2,65 @@
 
 > **AI-Powered Water Demand Forecasting & Municipal Decision Support for Hyderabad (GHMC)**
 
----
+HydroIntel is a Flask web dashboard for municipal water authorities. It pairs a **Random Forest Regressor** for daily zone demand forecasting with **Google Gemini AI** for concise operational action plans.
 
-## 📌 **What is HydroIntel?**
+## Key Features
 
-**HydroIntel** is a web-based decision dashboard for municipal water authorities. It uses **Machine Learning** to accurately forecast daily water demand across Hyderabad zones and leverages **Google Gemini AI** to produce immediate operational action plans.
+- **Smart Demand Forecasting**: Predicts daily water dispatch (Megaliters / ML) from zone demographics, temperature, rainfall, and previous-day dispatch.
+- **Gemini AI Directives**: Generates 3-point municipal advisories (release timing, weather adjustment, public advisory) with automatic multi-model fallback.
+- **VisionOS Liquid Glass UI**: Frosted-glass interface with Dark/Light mode, 4 ambient accent themes, 3D tilt glare, and water ripple effects.
+- **Interactive Analytics**: Reservoir fill simulation, baseline gauge, Bar/Radar zone comparison charts, voice briefing, clipboard copy, and PDF print export.
 
----
+## Project Structure
 
-## ⚡ **Key Features**
+```text
+hydrointel/
+├── app.py                  # Flask server, validation, ML inference & Gemini API
+├── datasets/               # Raw municipal CSVs + cleaned final_dataset.csv
+├── models/                 # Serialized model.pkl and model_columns.pkl
+├── scripts/
+│   ├── clean_data.py       # ETL pipeline: raw CSVs -> datasets/final_dataset.csv
+│   └── train_model.py      # Trains Random Forest -> models/
+├── static/
+│   ├── css/style.css       # VisionOS Liquid Glass design system
+│   └── js/app.js           # Client interactions, telemetry loader & Chart.js
+├── templates/
+│   └── index.html          # Input & results dashboard template
+├── .env.example            # Environment variable template
+└── requirements.txt        # Python dependencies
+```
 
-- **🔮 Smart Demand Forecasting**: Predicts water dispatch (in Megaliters / ML) using a trained Random Forest Regressor based on weather, demographics, and previous dispatch.
-- **🤖 Gemini AI Directives**: Delivers automated 3-point municipal advisories (Supply Timing, Weather Adjustments, Public Advisories) with multi-model failover.
-- **🪟 Apple VisionOS Liquid Glass UI**: Ultra-clean frosted glass interface featuring interactive 3D tilt, water ripple physics, and instant Dark / Light mode switching.
-- **📊 Real-Time Analytics**:
-  - **Reservoir Capacity Gauge**: Visual needle indicator for demand stress levels.
-  - **Multi-View Zone Charts**: Switch on-the-fly between Bar and Radar profile comparisons.
-- **🔊 Operator Voice Briefing**: Built-in audio playback and one-click PDF export for field teams.
+## Quick Start
 
----
+1. **Activate virtual environment & install dependencies**
 
-## 🛠️ **Tech Stack**
+   ```powershell
+   # Windows
+   .\venv\Scripts\activate
+   pip install -r requirements.txt
+   ```
 
-- **Backend**: Python 3.10+, Flask
-- **Machine Learning**: Scikit-Learn (Random Forest), Pandas, NumPy, Joblib
-- **Generative AI**: Google GenAI SDK (Gemini 3.6 Flash / 2.0 Flash)
-- **Frontend**: Vanilla HTML5, VisionOS CSS3 Design System, Chart.js
+2. **Configure your Gemini API key**
 
----
+   ```powershell
+   Copy-Item .env.example .env
+   ```
 
-## 📁 **Project Structure (What is What)**
+   Set `GEMINI_API_KEY` inside `.env`.
 
-| File / Folder | Purpose |
-| :--- | :--- |
-| **`app.py`** | Main Flask server, routes, and Gemini API integration |
-| **`clean_data.py`** | Data cleaning script that fixes missing sensor logs and merges records |
-| **`train_model.py`** | Machine Learning script that trains and saves the Random Forest model |
-| **`final_dataset.csv`** | Cleaned dataset used for training the model |
-| **`model.pkl`** | Trained Random Forest machine learning model |
-| **`model_columns.pkl`** | Encoded feature column structure |
-| **`requirements.txt`** | List of required Python packages |
-| **`.env.example`** | Safe template showing required environment variables |
-| **`static/css/`** | VisionOS Liquid Glass styling, themes, and animations |
-| **`static/js/`** | Client logic: 3D tilt, canvas effects, audio, and charts |
-| **`templates/`** | HTML dashboard templates |
+3. **Run the dashboard**
 
----
+   ```powershell
+   python app.py
+   ```
 
-## 🚀 **How to Run the Project**
+   Open `http://127.0.0.1:5000` in your browser.
 
-### **Step 1: Activate Virtual Environment**
-Open your terminal inside the `hydrointel` folder:
+## Rebuilding Data & Model (Optional)
+
+If you update the raw CSV files inside `datasets/`:
 
 ```powershell
-# Windows:
-.\venv\Scripts\activate
-
-# macOS / Linux:
-source venv/bin/activate
-```
-
----
-
-### **Step 2: Install Dependencies**
-```bash
-pip install -r requirements.txt
-```
-
----
-
-### **Step 3: Setup Your API Key**
-Create your `.env` file from the provided template:
-
-```powershell
-# Windows:
-Copy-Item .env.example .env
-
-# macOS / Linux:
-cp .env.example .env
-```
-
-Open `.env` and paste your Google Gemini API key:
-```env
-GEMINI_API_KEY=your_actual_api_key_here
-```
-
----
-
-### **Step 4: Start the Web App**
-```bash
-python app.py
-```
-
-Open your browser and visit: **`http://127.0.0.1:5000`**
-
----
-
-### 🔁 **(Optional) Re-clean Data or Retrain Model**
-If you ever update the raw datasets inside `datasets/`:
-```bash
-python clean_data.py
-python train_model.py
+python scripts/clean_data.py
+python scripts/train_model.py
 ```

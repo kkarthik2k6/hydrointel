@@ -1,110 +1,150 @@
-"""
-HydroIntel — Municipal Water Demand Forecasting & Intelligence Platform
-Author: HydroIntel Engineering Team
-Description: Flask web service integrating Random Forest ML demand prediction 
-             with Google Gemini AI automated operational directives.
+"""HydroIntel — Municipal Water Demand Forecasting & Intelligence Platform.
+
+Flask web service combining a Random Forest demand prediction model with
+Google Gemini AI operational directives for Hyderabad (GHMC) zones.
 """
 
-from pathlib import Path
+from collections.abc import Mapping
+import json
+import logging
+import math
 import os
+from pathlib import Path
 import time
-from typing import Dict, Any, Optional
+from typing import Dict, Tuple, TypedDict
 
+from dotenv import load_dotenv
 from flask import Flask, render_template, request
 from google import genai
 import joblib
 import markdown
 import pandas as pd
-from dotenv import load_dotenv
 
-# Base Directories
 BASE_DIR = Path(__file__).resolve().parent
-MODEL_PATH = BASE_DIR / "model.pkl"
-COLUMNS_PATH = BASE_DIR / "model_columns.pkl"
+MODELS_DIR = BASE_DIR / "models"
 
-# Load environment configuration (.env)
 load_dotenv(BASE_DIR / ".env")
+logging.basicConfig(level=logging.INFO, format="[%(levelname)s] %(message)s")
+logger = logging.getLogger("hydrointel")
 
-# Initialize Flask Application
 app = Flask(__name__)
 
-# Load Trained ML Model & Feature Column Structure
-model = joblib.load(MODEL_PATH)
-model_columns = joblib.load(COLUMNS_PATH)
+# Trained ML model & encoded column schema
+model = joblib.load(MODELS_DIR / "model.pkl")
+model_columns = joblib.load(MODELS_DIR / "model_columns.pkl")
 
-# Configure Google Gemini Client from Environment Variable
+# Google Gemini client
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
-if not GEMINI_API_KEY:
-    print("[WARNING] 'GEMINI_API_KEY' not found in environment or .env file.")
-    gemini_client = None
-else:
-    gemini_client = genai.Client(api_key=GEMINI_API_KEY)
+gemini_client = genai.Client(api_key=GEMINI_API_KEY) if GEMINI_API_KEY else None
+if not gemini_client:
+    logger.warning("GEMINI_API_KEY not found in environment or .env file.")
 
-# Baseline Historical Averages for GHMC Zones (Megaliters)
-ZONE_BENCHMARKS: Dict[str, float] = {
-    "Banjara Hills": 47.5,
-    "Kukatpally": 78.2,
-    "LB Nagar": 62.4,
-    "Malkajgiri": 54.1,
-    "Secunderabad": 51.8,
-    "Uppal": 43.6,
+GEMINI_MODELS = ("gemini-3.6-flash", "gemini-2.0-flash-lite", "gemini-2.0-flash")
+
+
+class ZoneInfo(TypedDict):
+    population: int
+    benchmark: float
+
+
+class TelemetryData(TypedDict):
+    zone: str
+    population: float
+    temperature: float
+    rainfall: float
+    prev_dispatch: float
+
+
+# Single source of truth for GHMC zones (population & baseline dispatch in ML)
+ZONES: Dict[str, ZoneInfo] = {
+    "Banjara Hills": {"population": 65200, "benchmark": 47.5},
+    "Kukatpally": {"population": 315500, "benchmark": 78.2},
+    "LB Nagar": {"population": 385000, "benchmark": 62.4},
+    "Malkajgiri": {"population": 110000, "benchmark": 54.1},
+    "Secunderabad": {"population": 250000, "benchmark": 51.8},
+    "Uppal": {"population": 95000, "benchmark": 43.6},
 }
+ZONE_BENCHMARKS: Dict[str, float] = {k: v["benchmark"] for k, v in ZONES.items()}
+ZONE_LABELS_JSON = json.dumps(list(ZONE_BENCHMARKS.keys()))
+ZONE_BASELINES_JSON = json.dumps(list(ZONE_BENCHMARKS.values()))
 
 
-def get_sustainability_tips(
-    zone: str, 
-    population: float, 
-    temp: float, 
-    rainfall: float, 
-    prediction: float
-) -> str:
-    """Generate clear, actionable municipal operational directives using Google Gemini.
-    
-    Includes multi-model fallback to ensure high availability during peak demand.
-    """
+def parse_telemetry_form(form: Mapping[str, str]) -> Tuple[TelemetryData | None, str | None]:
+    """Validate and parse telemetry fields submitted from the dashboard form."""
+    zone = form.get("zone", "").strip()
+    if zone not in ZONES:
+        return None, "Please select a valid GHMC zone."
+
+    try:
+        population = float(form["population"])
+        temperature = float(form["temperature"])
+        rainfall = float(form["rainfall"])
+        prev_dispatch = float(form["prev_dispatch"])
+    except (KeyError, ValueError):
+        return None, "Please provide valid numeric values for all telemetry fields."
+
+    if not all(math.isfinite(v) for v in (population, temperature, rainfall, prev_dispatch)):
+        return None, "Telemetry values must be finite numbers."
+    if population <= 0 or rainfall < 0 or prev_dispatch < 0:
+        return None, "Population must be positive, and rainfall / previous dispatch cannot be negative."
+
+    data: TelemetryData = {
+        "zone": zone,
+        "population": population,
+        "temperature": temperature,
+        "rainfall": rainfall,
+        "prev_dispatch": prev_dispatch,
+    }
+    return data, None
+
+
+def predict_demand(data: TelemetryData) -> float:
+    """Run Random Forest inference for a single telemetry payload."""
+    input_df = pd.DataFrame([{
+        "Zone": data["zone"],
+        "Temperature_C": data["temperature"],
+        "Rainfall_mm": data["rainfall"],
+        "Baseline_Population": data["population"],
+        "Previous_Day_Dispatch_ML": data["prev_dispatch"],
+    }])
+    encoded = pd.get_dummies(input_df, columns=["Zone"]).reindex(columns=model_columns, fill_value=0)
+    return round(float(model.predict(encoded)[0]), 2)
+
+
+def get_sustainability_tips(data: TelemetryData, prediction: float) -> str:
+    """Generate a concise 3-point municipal operational directive via Google Gemini."""
     if not gemini_client:
         return (
-            "**Gemini API Not Configured**: Please configure your `GEMINI_API_KEY` "
-            "in the `.env` file to enable automated AI operational directives."
+            "**Gemini API Not Configured**: Add your `GEMINI_API_KEY` to the `.env` file "
+            "to enable automated AI operational directives."
         )
 
-    fallback_models = ["gemini-3.6-flash", "gemini-2.0-flash-lite", "gemini-2.0-flash"]
+    prompt = (
+        f"You are a smart water management assistant for Hyderabad.\n"
+        f"Given:\n"
+        f"- Zone: {data['zone']}\n"
+        f"- Population: {data['population']:,.0f}\n"
+        f"- Temperature: {data['temperature']} °C\n"
+        f"- Rainfall: {data['rainfall']} mm\n"
+        f"- Predicted Water Demand: {prediction} Megaliters (ML)\n\n"
+        f"Provide a very simple, direct 3-point plan in plain English:\n"
+        f"1. Water Release Timing (best hours to supply to avoid wastage).\n"
+        f"2. Weather Adjustment (how the {data['temperature']}°C temp or {data['rainfall']}mm rain affects supply).\n"
+        f"3. Public Advisory (one simple action residents should follow today).\n\n"
+        f"Rules: Keep language simple and easy to read. Use bullet points. Maximum 3 short points."
+    )
 
-    prompt = f"""
-    You are a smart water management assistant for Hyderabad.
-    Given:
-    - Zone: {zone}
-    - Population: {population:,.0f}
-    - Temperature: {temp} °C
-    - Rainfall: {rainfall} mm
-    - Predicted Water Demand: {prediction} Megaliters (ML)
-
-    Provide a very simple, direct 3-point plan in plain English:
-    1. Water Release Timing (best hours to supply to avoid wastage).
-    2. Weather Adjustment (how the {temp}°C temp or {rainfall}mm rain affects supply).
-    3. Public Advisory (one simple action residents should follow today).
-
-    Rules:
-    - Keep language simple and easy to read.
-    - Use bullet points.
-    - Maximum 3 short points.
-    """
-
-    for model_name in fallback_models:
+    for model_name in GEMINI_MODELS:
         for attempt in range(2):
             try:
-                response = gemini_client.models.generate_content(
-                    model=model_name,
-                    contents=prompt,
-                )
+                response = gemini_client.models.generate_content(model=model_name, contents=prompt)
                 if response and response.text:
                     return response.text
-            except Exception as e:
-                if attempt < 1:
+            except Exception as exc:
+                if attempt == 0:
                     time.sleep(2)
                     continue
-                print(f"[Gemini Notice] Model '{model_name}' unavailable ({e}). Trying next fallback...")
-                break
+                logger.info("Model '%s' unavailable (%s). Trying next fallback.", model_name, exc)
 
     return (
         "AI recommendations are temporarily experiencing high traffic. "
@@ -114,66 +154,50 @@ def get_sustainability_tips(
 
 @app.route("/", methods=["GET"])
 def index():
-    """Render the main forecasting input dashboard."""
-    return render_template(
-        "index.html",
-        prediction=None,
-        zone_benchmarks=ZONE_BENCHMARKS,
-    )
+    """Render the main forecasting dashboard."""
+    return render_template("index.html", prediction=None, zones=ZONES)
 
 
 @app.route("/predict", methods=["POST"])
 def predict():
-    """Handle telemetry input, run ML model inference, and query Gemini advisory."""
-    zone = request.form["zone"]
-    population = float(request.form["population"])
-    temperature = float(request.form["temperature"])
-    rainfall = float(request.form["rainfall"])
-    prev_dispatch = float(request.form["prev_dispatch"])
+    """Validate telemetry input, run ML demand prediction, and render results."""
+    form_data, error = parse_telemetry_form(request.form)
+    if error or form_data is None:
+        return (
+            render_template(
+                "index.html",
+                prediction=None,
+                zones=ZONES,
+                error=error,
+            ),
+            400,
+        )
 
-    form_data: Dict[str, Any] = {
-        "zone": zone,
-        "population": population,
-        "temperature": temperature,
-        "rainfall": rainfall,
-        "prev_dispatch": prev_dispatch,
-    }
-
-    # Prepare feature dataframe aligned with model training schema
-    input_df = pd.DataFrame([{
-        "Zone": zone,
-        "Temperature_C": temperature,
-        "Rainfall_mm": rainfall,
-        "Baseline_Population": population,
-        "Previous_Day_Dispatch_ML": prev_dispatch,
-    }])
-
-    # One-Hot Encode categorical zone and align columns
-    input_encoded = pd.get_dummies(input_df, columns=["Zone"])
-    input_encoded = input_encoded.reindex(columns=model_columns, fill_value=0)
-
-    # Machine Learning Demand Inference
-    predicted_val = model.predict(input_encoded)[0]
-    predicted_dispatch = round(float(predicted_val), 2)
-
-    # Gemini Operational Directives
-    ai_tips_raw = get_sustainability_tips(
-        zone=zone,
-        population=population,
-        temp=temperature,
-        rainfall=rainfall,
-        prediction=predicted_dispatch,
-    )
-    ai_tips_html = markdown.markdown(ai_tips_raw or "")
+    predicted_dispatch = predict_demand(form_data)
+    baseline = ZONE_BENCHMARKS.get(form_data["zone"], predicted_dispatch)
+    variance = round(predicted_dispatch - baseline, 2)
+    is_above = variance > 0
+    ai_html = markdown.markdown(get_sustainability_tips(form_data, predicted_dispatch))
 
     return render_template(
         "index.html",
         prediction=predicted_dispatch,
         form_data=form_data,
-        ai_recommendation=ai_tips_html,
-        zone_benchmarks=ZONE_BENCHMARKS,
+        population_display=f"{form_data['population']:,.0f}",
+        baseline=baseline,
+        variance=variance,
+        variance_icon="📈" if is_above else "📉",
+        variance_icon_class="rose" if is_above else "emerald",
+        variance_value_class="negative" if is_above else "positive",
+        variance_prefix="+" if is_above else "",
+        zone_labels_json=ZONE_LABELS_JSON,
+        zone_baselines_json=ZONE_BASELINES_JSON,
+        ai_recommendation=ai_html,
+        zones=ZONES,
     )
 
 
 if __name__ == "__main__":
-    app.run(debug=True, port=5000)
+    debug = os.environ.get("FLASK_DEBUG", "1") == "1"
+    port = int(os.environ.get("PORT", "5000"))
+    app.run(debug=debug, port=port)
